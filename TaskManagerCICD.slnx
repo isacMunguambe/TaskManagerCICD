@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="TaskManagerCICD/TaskManagerCICD.csproj" />
+  <Project Path="Tests/Tests.csproj" />
+</Solution>
