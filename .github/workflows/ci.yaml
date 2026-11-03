@@ -10,6 +10,11 @@ on:
 
   workflow_dispatch:          # permite correr à mão a partir do separador Actions
 
+# Se chegar um push novo ao mesmo branch/PR, cancela o run anterior que ainda esteja a correr
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: windows-latest   # máquina Windows temporária do GitHub (apagada no fim)
