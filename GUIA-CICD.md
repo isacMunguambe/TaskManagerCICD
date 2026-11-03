@@ -15,7 +15,6 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 
 | Fase | Tema | Resultado |
 | ---- | ---- | --------- |
-| 0 | Corrigir o ponto de partida | Projecto compila limpo, workflow aponta para o sítio certo |
 | 1 | Primeiro CI verde | Push → build + testes automáticos no GitHub |
 | 2 | Código e testes reais | O CI passa a proteger lógica de verdade |
 | 3 | Branches, PRs e protecção | Ninguém faz merge sem CI verde |
@@ -29,45 +28,6 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 
 ---
 
-## Fase 0 — Corrigir o ponto de partida
-
-**Objectivo:** o repositório tem alguns problemas que impedem o CI de funcionar. Corrigi-los ensina a primeira lição: *o pipeline só faz o que lhe dizes, literalmente.*
-
-### Diagnóstico (estado em 2026-11-03)
-
-| # | Problema | Onde | Consequência |
-| - | -------- | ---- | ------------ |
-| 1 | O workflow escuta `main` e `develop`, mas o teu branch chama-se `master` | `.github/workflows/ci.yaml` | **O CI nunca dispara.** O push de "Add CI pipeline" não gerou nenhuma execução. |
-| 2 | O workflow usa `TaskManagerCICD.sln`, mas a solução é `TaskManagerCICD.slnx` | `.github/workflows/ci.yaml` | Quando disparar, falha no `restore` com "file not found". |
-| 3 | O pacote `xunit.v3` está no projecto da **API**, não no de **testes** | `TaskManagerCICD/TaskManagerCICD.csproj` | A API passa a ter dependência de testes; gera o aviso `CS7022` (entry point duplicado). |
-| 4 | O projecto de testes não referencia o xUnit directamente (só o recebe "por arrasto" da API) | `Tests/Tests.csproj` | Funciona por acaso; parte assim que corrigires o ponto 3. |
-| 5 | Pasta vazia `NewFolder` referenciada | `TaskManagerCICD/TaskManagerCICD.csproj` | Ruído. |
-
-### Passos
-
-- [x] **0.1** Remover o xUnit da API. Em `TaskManagerCICD/TaskManagerCICD.csproj`, apaga a linha `xunit.v3` e o `ItemGroup` do `NewFolder`.
-- [x] **0.2** Adicionar o xUnit ao projecto de testes:
-  ```bash
-  dotnet add Tests package xunit.v3
-  ```
-  > xUnit v3 gera um executável de testes. Se o build reclamar, acrescenta `<OutputType>Exe</OutputType>` ao `PropertyGroup` de `Tests/Tests.csproj`.
-- [x] **0.3** Confirmar localmente que está limpo — **0 avisos, 0 erros**:
-  ```bash
-  dotnet build TaskManagerCICD.slnx -c Release
-  dotnet test TaskManagerCICD.slnx -c Release
-  ```
-- [x] **0.4** Corrigir o workflow (`.github/workflows/ci.yaml`): branches → `master` e ficheiro → `TaskManagerCICD.slnx` (ver YAML na Fase 1).
-
-- [x] **0.5** (Descoberta adicional) O xUnit v3 usa o *Microsoft.Testing.Platform* e o .NET 10 SDK exige activá-lo para o `dotnet test`. Foi resolvido com um `global.json` na raiz (`"test": { "runner": "Microsoft.Testing.Platform" }`) e `<OutputType>Exe</OutputType>` em `Tests/Tests.csproj`. Sem isto, o `dotnet test` falha com "Testing with VSTest target is no longer supported".
-
-**Decisão sobre o nome do branch:** mantemos `master` como branch principal. Mais tarde (Fase 3) criamos `develop`.
-
-### Perguntas de verificação
-1. Porque é que o push de "Add CI pipeline" não apareceu no separador **Actions**?
-2. Que diferença há entre um `PackageReference` no projecto de testes e um que chega "transitivamente" pela API?
-
----
-
 ## Fase 1 — Primeiro CI verde
 
 **Objectivo:** cada push e cada Pull Request executa restore → build → testes, e tu sabes ler o resultado.
@@ -78,7 +38,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 - **Runner hosted** (`windows-latest`): máquina temporária do GitHub, apagada no fim do job.
 
 ### Passos
-- [ ] **1.1** Substituir o conteúdo de `.github/workflows/ci.yaml`:
+- [x] **1.1** Substituir o conteúdo de `.github/workflows/ci.yaml`:
   ```yaml
   name: TaskManager CI
 
@@ -112,7 +72,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
           run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release
   ```
   > Se o GitHub mostrar um aviso de versão de Node nas actions, sobe-as para a versão major mais recente (`@v5`, …). Ler e resolver avisos faz parte do trabalho.
-- [ ] **1.2** Commit e push das Fases 0 e 1:
+- [x] **1.2** Commit e push das Fases 0 e 1:
   ```bash
   git add .
   git commit -m "Fix CI: target master, use .slnx, move xunit to test project"
@@ -120,7 +80,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   ```
 - [ ] **1.3** No GitHub → **Actions** → abre a execução e expande cada step. Repara no tempo de cada um.
 - [ ] **1.4** Experimenta o botão **Run workflow** (graças ao `workflow_dispatch`).
-- [ ] **1.5** Adiciona o badge de estado no topo de um `README.md`:
+- [x] **1.5** Adiciona o badge de estado no topo de um `README.md`:
   ```markdown
   ![CI](https://github.com/isacMunguambe/TaskManagerCICD/actions/workflows/ci.yaml/badge.svg)
   ```
@@ -567,7 +527,6 @@ Get-Service actions.runner.*
 
 | Fase | Início | Concluída | Notas / problemas / o que aprendi |
 | ---- | ------ | --------- | --------------------------------- |
-| 0 | | | |
 | 1 | | | |
 | 2 | | | |
 | 3 | | | |
