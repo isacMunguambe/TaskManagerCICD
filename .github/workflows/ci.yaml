@@ -27,6 +27,9 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore TaskManagerCICD.slnx
 
+      - name: Check formatting
+        run: dotnet format TaskManagerCICD.slnx --verify-no-changes --no-restore
+
       - name: Build application
         run: dotnet build TaskManagerCICD.slnx --no-restore --configuration Release
 
