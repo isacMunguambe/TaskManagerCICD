@@ -125,12 +125,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   - `Create_WithPastDueDate_Throws`
   - `Complete_AlreadyCompleted_Throws`
 - [x] **2.4** Push → CI verde.
-- [ ] **2.5** **Partir de propósito:** altera uma regra (ex.: aceita títulos vazios), faz push e observa o CI vermelho. Lê o log até encontrares o teste que falhou e a mensagem. Depois corrige e volta a verde.
+- [x] **2.5** **Partir de propósito:** altera uma regra (ex.: aceita títulos vazios), faz push e observa o CI vermelho. Lê o log até encontrares o teste que falhou e a mensagem. Depois corrige e volta a verde.
 - [ ] **2.6** (Opcional) Testes de integração com `Microsoft.AspNetCore.Mvc.Testing` (`WebApplicationFactory`) para chamar os endpoints HTTP de verdade.
 
 ### Como sei que funcionou
-- [ ] Tens pelo menos 6 testes com significado.
-- [ ] Viste o CI ficar vermelho por causa de um teste e sabes apontar a linha do log que o explica.
+- [x] Tens pelo menos 6 testes com significado.
+- [x] Viste o CI ficar vermelho por causa de um teste e sabes apontar a linha do log que o explica.
 
 ### Perguntas de verificação
 1. Qual é a diferença entre um build que falha e um teste que falha, do ponto de vista do pipeline?
