@@ -8,7 +8,7 @@ Accept: application/json
 POST {{TaskManagerCICD_HostAddress}}/api/tasks
 Content-Type: application/json
 
-{ "title": "Aprender CI/CD", "description": "Fase 2" }
+{ "title": "Aprender CI/CD", "description": "Fase 3", "priority": "High" }
 
 ###
 
