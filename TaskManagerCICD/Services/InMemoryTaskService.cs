@@ -28,6 +28,9 @@ public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
         if (request.Title.Length > MaxTitleLength)
             throw new ArgumentException($"O título não pode ter mais de {MaxTitleLength} caracteres.", nameof(request));
 
+        if (!Enum.IsDefined(request.Priority))
+            throw new ArgumentException("A prioridade é inválida.", nameof(request));
+
         var now = timeProvider.GetUtcNow().UtcDateTime;
         if (request.DueDate is { } due && due < now)
             throw new ArgumentException("A data limite não pode estar no passado.", nameof(request));
@@ -39,6 +42,7 @@ public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
                 Id = _nextId++,
                 Title = request.Title.Trim(),
                 Description = request.Description,
+                Priority = request.Priority,
                 CreatedAt = now,
                 DueDate = request.DueDate
             };

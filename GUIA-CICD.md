@@ -161,10 +161,10 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   ```
 - [x] **3.2** Fluxo de trabalho a partir de agora:
   `feature/xxx` → PR para `develop` → (quando estável) PR de `develop` para `master`.
-- [ ] **3.3** Tornar o repositório **público** (as regras de protecção são gratuitas em repositórios públicos; em privados exigem plano pago) — *Settings → General → Danger Zone → Change visibility → Make public*. Antes de o fazeres: confirma que não há passwords nem connection strings no código ou no histórico (`git grep -i password`).
+- [x] **3.3** Repositório público (as regras de protecção são gratuitas em repositórios públicos).
   > ⚠️ Repositório público + self-hosted runner (Fase 6) exige cuidados: em *Settings → Actions → General → Fork pull request workflows*, exige aprovação para contribuidores externos, e o runner só será usado em `push` para `master`, nunca em `pull_request`.
 
-  Depois, em **Settings → Rules → Rulesets** (ou *Branches → Branch protection*), para `master` e `develop`:
+  Em **Settings → Rules → Rulesets** (ou *Branches → Branch protection*), para `master` e `develop`:
   - Exigir Pull Request antes do merge.
   - Exigir que o status check **`build-and-test`** passe.
   - Bloquear force push.

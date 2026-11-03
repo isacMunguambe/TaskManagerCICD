@@ -67,6 +67,38 @@ public class InMemoryTaskServiceTests
     }
 
     [Fact]
+    public void Create_WithoutPriority_DefaultsToMedium()
+    {
+        var service = CreateService();
+
+        var task = service.Create(new CreateTaskRequest("Tarefa", null, null));
+
+        Assert.Equal(Priority.Medium, task.Priority);
+    }
+
+    [Theory]
+    [InlineData(Priority.Low)]
+    [InlineData(Priority.Medium)]
+    [InlineData(Priority.High)]
+    public void Create_WithPriority_KeepsPriority(Priority priority)
+    {
+        var service = CreateService();
+
+        var task = service.Create(new CreateTaskRequest("Tarefa", null, null, priority));
+
+        Assert.Equal(priority, task.Priority);
+    }
+
+    [Fact]
+    public void Create_WithInvalidPriority_Throws()
+    {
+        var service = CreateService();
+
+        Assert.Throws<ArgumentException>(() =>
+            service.Create(new CreateTaskRequest("Tarefa", null, null, (Priority)99)));
+    }
+
+    [Fact]
     public void Complete_PendingTask_MarksAsCompleted()
     {
         var service = CreateService();
