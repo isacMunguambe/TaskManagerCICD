@@ -22,8 +22,8 @@ public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
 
     public TaskItem Create(CreateTaskRequest request)
     {
-        //if (string.IsNullOrWhiteSpace(request.Title))
-        //    throw new ArgumentException("O título é obrigatório.", nameof(request));
+        if (string.IsNullOrWhiteSpace(request.Title))
+            throw new ArgumentException("O título é obrigatório.", nameof(request));
 
         if (request.Title.Length > MaxTitleLength)
             throw new ArgumentException($"O título não pode ter mais de {MaxTitleLength} caracteres.", nameof(request));
