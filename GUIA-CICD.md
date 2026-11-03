@@ -161,16 +161,18 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   ```
 - [ ] **3.2** Fluxo de trabalho a partir de agora:
   `feature/xxx` → PR para `develop` → (quando estável) PR de `develop` para `master`.
-- [ ] **3.3** ⏸️ **ADIADO** — as regras de protecção de branches só são gratuitas em repositórios **públicos**; em privados exigem plano pago do GitHub. Retomar se o repositório passar a público (ver aviso de segurança da Fase 6 antes de o fazer) ou se houver subscrição. Entretanto, o CI continua a correr e a mostrar vermelho/verde nos PRs, mas **nada impede** o merge — a disciplina é manual.
-  No GitHub → **Settings → Rules → Rulesets** (ou *Branches → Branch protection*), para `master` e `develop`:
+- [ ] **3.3** Tornar o repositório **público** (as regras de protecção são gratuitas em repositórios públicos; em privados exigem plano pago) — *Settings → General → Danger Zone → Change visibility → Make public*. Antes de o fazeres: confirma que não há passwords nem connection strings no código ou no histórico (`git grep -i password`).
+  > ⚠️ Repositório público + self-hosted runner (Fase 6) exige cuidados: em *Settings → Actions → General → Fork pull request workflows*, exige aprovação para contribuidores externos, e o runner só será usado em `push` para `master`, nunca em `pull_request`.
+
+  Depois, em **Settings → Rules → Rulesets** (ou *Branches → Branch protection*), para `master` e `develop`:
   - Exigir Pull Request antes do merge.
   - Exigir que o status check **`build-and-test`** passe.
   - Bloquear force push.
 - [ ] **3.4** Criar `feature/task-priority` (adiciona prioridade Low/Medium/High às tarefas + testes), abrir PR para `develop` e ver o CI a correr **dentro do PR**.
-- [ ] **3.5** ⏸️ (depende do 3.3) Tentar fazer merge de um PR com CI vermelho e confirmar que o GitHub bloqueia.
+- [ ] **3.5** Tentar fazer merge de um PR com CI vermelho e confirmar que o GitHub bloqueia.
 
 ### Como sei que funcionou
-- [ ] ⏸️ O botão de merge fica bloqueado enquanto o CI está vermelho ou a correr. *(depende do 3.3)*
+- [ ] O botão de merge fica bloqueado enquanto o CI está vermelho ou a correr.
 - [ ] Já fizeste pelo menos um ciclo completo feature → develop → master por PR.
 
 ### Perguntas de verificação
