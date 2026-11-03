@@ -1,0 +1,15 @@
+name: PR source check
+
+on:
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  check-source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Only develop may target master
+        if: github.base_ref == 'master' && github.head_ref != 'develop'
+        run: |
+          echo "PRs para master só podem vir de develop (origem: ${{ github.head_ref }})."
+          exit 1
