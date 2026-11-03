@@ -134,7 +134,18 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 
 ### Perguntas de verificação
 1. Qual é a diferença entre um build que falha e um teste que falha, do ponto de vista do pipeline?
+
+   > **Resposta:** os dois param o pipeline e deixam o run vermelho, mas dizem coisas diferentes.
+   > - **Build falha:** o código nem compila (erro de sintaxe, tipo inexistente, referência em falta). Não existem binários, por isso os testes nem chegam a correr.
+   > - **Teste falha:** o código compila, mas o comportamento não é o esperado. No nosso caso, o step *Build* ficou verde e só o *Run tests* ficou vermelho, com `Assert.Throws() Failure: No exception was thrown`.
+   >
+   > No pipeline, o step que falha indica logo onde procurar: build → erro no código; teste → erro na lógica. Em ambos os casos nada passa para o deployment.
+
 2. Porque é que o serviço deve estar atrás de uma interface (`ITaskService`)? (Pista: Fase 8.)
+
+   > **Resposta:** porque o controller e os testes dependem do **contrato** (`ITaskService`) e não da implementação concreta. Na Fase 8 trocamos o `InMemoryTaskService` por um `EfTaskService` (SQL Server) alterando apenas **uma linha** no `Program.cs` (o registo da injecção de dependências); o controller não muda. Os testes unitários continuam a usar a versão em memória, rápida e sem base de dados, o que mantém o CI rápido e sem dependências externas.
+
+**Fase 2 concluída.**
 
 ---
 
