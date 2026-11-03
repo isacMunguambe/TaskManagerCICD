@@ -168,7 +168,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   - Exigir Pull Request antes do merge.
   - Exigir que o status check **`build-and-test`** passe.
   - Bloquear force push.
-- [ ] **3.4** Criar `feature/task-priority` (adiciona prioridade Low/Medium/High às tarefas + testes), abrir PR para `develop` e ver o CI a correr **dentro do PR**.
+- [x] **3.4** Criar `feature/task-priority` (adiciona prioridade Low/Medium/High às tarefas + testes), abrir PR para `develop` e ver o CI a correr **dentro do PR**.
 - [ ] **3.5** Tentar fazer merge de um PR com CI vermelho e confirmar que o GitHub bloqueia.
 
 ### Como sei que funcionou
@@ -177,7 +177,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 
 ### Perguntas de verificação
 1. Num PR, o CI testa o código do branch ou o resultado do merge com o destino?
+
+   > **Resposta:** o resultado do merge. No evento `pull_request`, o `actions/checkout` descarrega `refs/pull/<n>/merge`, um commit temporário que junta o teu branch com o estado actual do destino. Assim o CI apanha conflitos e incompatibilidades que só aparecem quando as duas partes se juntam, mesmo que o teu branch isolado esteja verde.
+
 2. Porque não basta "ter cuidado" em vez de configurar regras de protecção?
+
+   > **Resposta:** porque o cuidado falha: cansaço, pressa, um push directo por engano, um colega novo que não conhece o processo. A regra é aplicada pela máquina, sempre, a todos (incluindo a ti), e deixa registo. Um `master` que só recebe código com CI verde é sempre publicável, e isso é o que torna seguro o deployment automático da Fase 7.
 
 ---
 
