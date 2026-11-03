@@ -2,10 +2,12 @@ name: TaskManager CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
 
   pull_request:
-    branches: [ main, develop ]
+    branches: [ master, develop ]
+
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -21,10 +23,10 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore TaskManagerCICD.sln
+        run: dotnet restore TaskManagerCICD.slnx
 
       - name: Build application
-        run: dotnet build TaskManagerCICD.sln --no-restore --configuration Release
+        run: dotnet build TaskManagerCICD.slnx --no-restore --configuration Release
 
       - name: Run tests
-        run: dotnet test TaskManagerCICD.sln --no-build --configuration Release
+        run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release
