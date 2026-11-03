@@ -168,12 +168,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   - Exigir Pull Request antes do merge.
   - Exigir que o status check **`build-and-test`** passe.
   - Bloquear force push.
-- [ ] **3.4** Criar `feature/task-priority` (adiciona prioridade Low/Medium/High às tarefas + testes), abrir PR para `develop` e ver o CI a correr **dentro do PR**.
-- [ ] **3.5** Tentar fazer merge de um PR com CI vermelho e confirmar que o GitHub bloqueia.
+- [x] **3.4** Criar `feature/task-priority` (adiciona prioridade Low/Medium/High às tarefas + testes), abrir PR para `develop` e ver o CI a correr **dentro do PR**.
+- [x] **3.5** Tentar fazer merge de um PR com CI vermelho e confirmar que o GitHub bloqueia.
 
 ### Como sei que funcionou
-- [ ] O botão de merge fica bloqueado enquanto o CI está vermelho ou a correr.
-- [ ] Já fizeste pelo menos um ciclo completo feature → develop → master por PR.
+- [x] O botão de merge fica bloqueado enquanto o CI está vermelho ou a correr.
+- [x] Já fizeste pelo menos um ciclo completo feature → develop → master por PR.
 
 ### Perguntas de verificação
 1. Num PR, o CI testa o código do branch ou o resultado do merge com o destino?
