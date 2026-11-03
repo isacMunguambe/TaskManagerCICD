@@ -207,7 +207,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   - name: Check formatting
     run: dotnet format TaskManagerCICD.slnx --verify-no-changes
   ```
-- [ ] **4.3** **Resultados dos testes como artefacto:**
+- [x] **4.3** **Resultados dos testes como artefacto:**
   ```yaml
   - name: Run tests
     run: dotnet test TaskManagerCICD.slnx --no-build -c Release --report-xunit-trx --results-directory ./TestResults

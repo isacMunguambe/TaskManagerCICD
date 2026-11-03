@@ -53,3 +53,17 @@ jobs:
           path: ./TestResults
           if-no-files-found: warn   # avisa (sem falhar) se não houver relatório
           retention-days: 7         # o GitHub apaga o artefacto ao fim de 7 dias
+
+      # Gera o pacote final da API (DLLs + web.config) já pronto a copiar para o IIS
+      # Só corre se tudo antes passou; --no-build reutiliza a compilação Release já feita
+      - name: Publish API
+        run: dotnet publish TaskManagerCICD/TaskManagerCICD.csproj --no-build --configuration Release --output ./publish
+
+      # Guarda o pacote como artefacto: é ESTE ficheiro que a Fase 7 vai instalar no servidor
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskmanager-api
+          path: ./publish
+          if-no-files-found: error  # aqui falha: um deploy sem pacote não faz sentido
+          retention-days: 7
