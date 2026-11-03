@@ -194,14 +194,14 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 **Objectivo:** um pipeline mais rápido, mais informativo, e que produz o pacote que vai ser publicado.
 
 ### Passos
-- [ ] **4.1** **Cache de NuGet** — no `setup-dotnet`:
+- [x] **4.1** **Cache de NuGet** — no `setup-dotnet`:
   ```yaml
   with:
     dotnet-version: '10.0.x'
     cache: true
-    cache-dependency-path: '**/*.csproj'
+    cache-dependency-path: '**/packages.lock.json'
   ```
-  > O cache funciona melhor com *lock files*: acrescenta `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` aos `.csproj`, faz commit dos `packages.lock.json` e usa `cache-dependency-path: '**/packages.lock.json'`. Compara o tempo do restore antes e depois.
+  > A cache usa *lock files*: acrescenta `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` aos `.csproj`, gera os `packages.lock.json` com `dotnet restore` e faz commit deles. Compara o tempo do restore antes e depois.
 - [ ] **4.2** **Verificação de formatação** — novo step antes do build:
   ```yaml
   - name: Check formatting
