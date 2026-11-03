@@ -7,7 +7,7 @@ on:
   pull_request:
     branches: [ master, develop ]
 
-  workflow_dispatch:
+  workflow_dispatch:          # permite correr à mão a partir do separador Actions
 
 jobs:
   build-and-test:

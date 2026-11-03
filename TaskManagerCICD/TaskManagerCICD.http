@@ -1,6 +1,17 @@
 @TaskManagerCICD_HostAddress = http://localhost:5141
 
-GET {{TaskManagerCICD_HostAddress}}/weatherforecast/
+GET {{TaskManagerCICD_HostAddress}}/api/tasks
 Accept: application/json
+
+###
+
+POST {{TaskManagerCICD_HostAddress}}/api/tasks
+Content-Type: application/json
+
+{ "title": "Aprender CI/CD", "description": "Fase 2" }
+
+###
+
+PUT {{TaskManagerCICD_HostAddress}}/api/tasks/1/complete
 
 ###

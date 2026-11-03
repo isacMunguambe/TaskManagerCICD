@@ -78,21 +78,34 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   git commit -m "Fix CI: target master, use .slnx, move xunit to test project"
   git push
   ```
-- [ ] **1.3** No GitHub → **Actions** → abre a execução e expande cada step. Repara no tempo de cada um.
-- [ ] **1.4** Experimenta o botão **Run workflow** (graças ao `workflow_dispatch`).
+- [x] **1.3** No GitHub → **Actions** → abre a execução e expande cada step. Repara no tempo de cada um.
+- [x] **1.4** Experimenta o botão **Run workflow** (graças ao `workflow_dispatch`).
 - [x] **1.5** Adiciona o badge de estado no topo de um `README.md`:
   ```markdown
   ![CI](https://github.com/isacMunguambe/TaskManagerCICD/actions/workflows/ci.yaml/badge.svg)
   ```
 
 ### Como sei que funcionou
-- [ ] Existe uma execução verde no separador Actions, disparada pelo teu push.
-- [ ] Consegues encontrar no log a linha com o número de testes executados.
-- [ ] O badge aparece verde no README.
+- [x] Existe uma execução verde no separador Actions, disparada pelo teu push.
+- [x] Consegues encontrar no log a linha com o número de testes executados.
+- [x] O badge aparece verde no README.
 
 ### Perguntas de verificação
 1. O que acontece se removeres `--no-build` do passo de testes? E se mantiveres `--no-build` mas removeres o passo de build?
+
+   > **Resposta:** `--no-build` manda o `dotnet test` usar o que já está em `bin/`, sem compilar.
+   > - **Sem `--no-build`:** o teste compila outra vez. Funciona, mas gasta tempo a repetir trabalho (e, com outra configuração, compilaria algo diferente do que o passo de build gerou).
+   > - **Com `--no-build` mas sem o passo de build:** falha. O runner é uma máquina nova em cada job, por isso não existe `bin/Release` e não há nada para testar.
+   >
+   > Cada passo faz uma coisa e reaproveita o resultado do anterior (restore → build → test). Se falhar, sabes logo em que fase.
+
 2. Porque usamos `--configuration Release` no CI e não `Debug`?
+
+   > **Resposta:** para testar exactamente o que vai ser publicado. Em produção a aplicação corre em Release (código optimizado, sem `#if DEBUG` nem `Debug.Assert`), e pode comportar-se de forma diferente do Debug. O `dotnet publish` do deployment também usa Release. Debug traz ainda símbolos completos e binários maiores que o servidor não precisa.
+   >
+   > Frase para fixar: *"Compilo uma vez, em Release, e reutilizo esse resultado nos passos seguintes, para testar o que vou publicar."*
+
+**Fase 1 concluída.**
 
 ---
 
@@ -101,13 +114,13 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 **Objectivo:** um CI que só testa o `WeatherForecast` não protege nada. Vamos dar à API lógica real e fazer o pipeline **falhar de propósito**.
 
 ### Passos
-- [ ] **2.1** Remover `WeatherForecast.cs` e `WeatherForecastController.cs`.
-- [ ] **2.2** Criar o domínio (sem base de dados ainda — guardamos em memória):
+- [x] **2.1** Remover `WeatherForecast.cs` e `WeatherForecastController.cs`.
+- [x] **2.2** Criar o domínio (sem base de dados ainda — guardamos em memória):
   - `Models/TaskItem.cs` — `Id`, `Title`, `Description`, `IsCompleted`, `CreatedAt`, `DueDate?`.
   - `Services/ITaskService.cs` + `Services/InMemoryTaskService.cs` — `GetAll`, `GetById`, `Create`, `Complete`, `Delete`.
   - Regras de negócio: título obrigatório (máx. 100 caracteres); `DueDate` não pode estar no passado; não se pode completar uma tarefa já completa.
   - `Controllers/TasksController.cs` — endpoints REST (`GET /api/tasks`, `GET /api/tasks/{id}`, `POST`, `PUT /{id}/complete`, `DELETE /{id}`).
-- [ ] **2.3** Testes unitários em `Tests/` (apaga o `UnitTest1.cs`), um por regra de negócio, por exemplo:
+- [x] **2.3** Testes unitários em `Tests/` (apaga o `UnitTest1.cs`), um por regra de negócio, por exemplo:
   - `Create_WithEmptyTitle_Throws`
   - `Create_WithPastDueDate_Throws`
   - `Complete_AlreadyCompleted_Throws`
