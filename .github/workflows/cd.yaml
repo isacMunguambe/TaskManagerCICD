@@ -16,45 +16,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Job 1: nos servidores do GitHub. Compila, testa e cria o pacote
-  build:
-    runs-on: windows-latest
+  # Job 1: chama o ci.yaml (formatação, build, testes e criação do pacote taskmanager-api)
+  # É o mesmo CI dos Pull Requests: um único sítio onde o build e os testes estão definidos
+  ci:
+    uses: ./.github/workflows/ci.yaml
 
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.0.x'
-          cache: true
-          cache-dependency-path: '**/packages.lock.json'
-
-      - name: Restore dependencies
-        run: dotnet restore TaskManagerCICD.slnx
-
-      - name: Build application
-        run: dotnet build TaskManagerCICD.slnx --no-restore --configuration Release
-
-      - name: Run tests
-        run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release
-
-      - name: Publish API
-        run: dotnet publish TaskManagerCICD/TaskManagerCICD.csproj --no-build --configuration Release --output ./publish
-
-      # Passa o pacote ao job seguinte (corre noutra máquina)
-      - name: Upload publish artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: taskmanager-api
-          path: ./publish
-          if-no-files-found: error
-          retention-days: 7
-
-  # Job 2: na TUA máquina (runner self-hosted). Só começa se o build passou
+  # Job 2: na TUA máquina (runner self-hosted). Só começa se o ci passou
   deploy:
-    needs: build
+    needs: ci
     if: github.ref == 'refs/heads/master'   # mesmo com "Run workflow", só publica a partir do master
     runs-on: [self-hosted, windows, iis]
 
@@ -65,6 +34,7 @@ jobs:
         with:
           sparse-checkout: scripts
 
+      # Descarrega o pacote que o ci.yaml publicou
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:

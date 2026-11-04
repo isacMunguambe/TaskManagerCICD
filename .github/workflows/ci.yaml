@@ -1,14 +1,17 @@
 name: TaskManager CI
 
-# QUANDO corre: em cada push para master/develop e em cada Pull Request para esses branches
+# QUANDO corre: push para develop, Pull Requests para master/develop, ou chamado pelo cd.yaml
+# Em push para master NÃO corre sozinho: o cd.yaml chama-o (evita fazer build e testes duas vezes)
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ develop ]
 
   pull_request:
     branches: [ master, develop ]
 
   workflow_dispatch:          # permite correr à mão a partir do separador Actions
+
+  workflow_call:              # permite que outro workflow (o cd.yaml) o chame como se fosse uma função
 
 # Se chegar um push novo ao mesmo branch/PR, cancela o run anterior que ainda esteja a correr
 concurrency:
