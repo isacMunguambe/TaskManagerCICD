@@ -202,15 +202,15 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
     cache-dependency-path: '**/packages.lock.json'
   ```
   > A cache usa *lock files*: acrescenta `<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>` aos `.csproj`, gera os `packages.lock.json` com `dotnet restore` e faz commit deles. Compara o tempo do restore antes e depois.
-- [ ] **4.2** **Verificação de formatação** — novo step antes do build:
+- [x] **4.2** **Verificação de formatação** — novo step antes do build:
   ```yaml
   - name: Check formatting
     run: dotnet format TaskManagerCICD.slnx --verify-no-changes
   ```
-- [ ] **4.3** **Resultados e cobertura de testes como artefacto:**
+- [x] **4.3** **Resultados dos testes como artefacto:**
   ```yaml
   - name: Run tests
-    run: dotnet test TaskManagerCICD.slnx --no-build -c Release --logger trx --collect:"XPlat Code Coverage" --results-directory ./TestResults
+    run: dotnet test TaskManagerCICD.slnx --no-build -c Release --report-xunit-trx --results-directory ./TestResults
 
   - name: Upload test results
     if: always()               # corre mesmo que os testes falhem
@@ -219,7 +219,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
       name: test-results
       path: ./TestResults
   ```
-- [ ] **4.4** **Artefacto de publicação** — o pacote que a Fase 7 vai instalar:
+  > **O que é um artefacto?** Um ficheiro (ou pasta) que o job guarda no fim e que fica disponível para descarregar na página do run. Sem isto, tudo o que o runner criou desaparece quando a máquina é apagada.
+  > **O que é o `.trx`?** Um ficheiro XML com o resultado de cada teste (nome, passou/falhou, duração, mensagem de erro). Serve para analisar uma falha sem voltar a correr os testes, e outras ferramentas sabem lê-lo.
+  > **Porque `if: always()`?** Por omissão, um step só corre se os anteriores passaram. Quando os testes falham, o step seguinte seria saltado, e perderias o relatório justamente quando mais precisas dele.
+  > **Nota (xUnit v3):** o teu projecto usa o *Microsoft.Testing.Platform*, por isso as opções `--logger trx` e `--collect:"XPlat Code Coverage"` (modo VSTest) **não funcionam**. Usa `--report-xunit-trx`. A **cobertura de código** precisa de outro pacote (`Microsoft.Testing.Extensions.CodeCoverage`, opção `--coverage`) e fica como desafio opcional.
+  > **Como confirmar:** abre um run, desce até **Artifacts** no fundo da página do resumo e descarrega `test-results`; dentro está o `.trx`.
+- [x] **4.4** **Artefacto de publicação** — o pacote que a Fase 7 vai instalar:
   ```yaml
   - name: Publish API
     run: dotnet publish TaskManagerCICD/TaskManagerCICD.csproj -c Release --no-build -o ./publish
@@ -231,7 +236,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
       path: ./publish
       retention-days: 7
   ```
-- [ ] **4.5** **Evitar execuções duplicadas** — no topo do workflow:
+- [x] **4.5** **Evitar execuções duplicadas** — no topo do workflow:
   ```yaml
   concurrency:
     group: ci-${{ github.ref }}
@@ -240,13 +245,18 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 - [ ] **4.6** (Desafio) Uma `matrix` que corre os testes em `windows-latest` e `ubuntu-latest`. Quanto tempo demora cada um? O que isso te diz sobre custos de minutos?
 
 ### Como sei que funcionou
-- [ ] Consegues descarregar o artefacto `taskmanager-api` da página da execução e ver lá dentro `TaskManagerCICD.dll` e `web.config`.
+- [x] Consegues descarregar o artefacto `taskmanager-api` da página da execução e ver lá dentro `TaskManagerCICD.dll` e `web.config`.
 - [ ] O CI falha se deixares código mal formatado.
 - [ ] O segundo restore é visivelmente mais rápido que o primeiro.
 
 ### Perguntas de verificação
 1. O que faz `if: always()` e porque é necessário no upload dos resultados?
+
+   > **Resposta:** faz o step correr sempre, mesmo que um step anterior tenha falhado. Por omissão, depois de uma falha os steps seguintes são saltados. Sem `always()`, quando os testes falhassem o relatório não seria guardado, e é justamente nessa altura que é preciso.
+
 2. Porque é que publicamos um artefacto em vez de fazer build directamente no servidor?
+
+   > **Resposta:** porque se compila uma vez, num ambiente limpo e igual de cada vez, e se instala exactamente o que foi testado. O servidor não precisa do SDK do .NET, e o rollback faz-se reinstalando um pacote antigo.
 
 ---
 

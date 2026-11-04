@@ -1,5 +1,6 @@
 name: TaskManager CI
 
+# QUANDO corre: em cada push para master/develop e em cada Pull Request para esses branches
 on:
   push:
     branches: [ master, develop ]
@@ -9,14 +10,21 @@ on:
 
   workflow_dispatch:          # permite correr à mão a partir do separador Actions
 
+# Se chegar um push novo ao mesmo branch/PR, cancela o run anterior que ainda esteja a correr
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
-    runs-on: windows-latest
+    runs-on: windows-latest   # máquina Windows temporária do GitHub (apagada no fim)
 
     steps:
+      # Descarrega o código do repositório para a máquina
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # Instala o .NET 10 e guarda/restaura a cache dos pacotes NuGet
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -24,11 +32,43 @@ jobs:
           cache: true
           cache-dependency-path: '**/packages.lock.json'
 
+      # Descarrega os pacotes NuGet (usa a cache quando existe)
       - name: Restore dependencies
         run: dotnet restore TaskManagerCICD.slnx
 
+      # Falha se o código não estiver formatado (não altera nada, só verifica)
+      - name: Check formatting
+        run: dotnet format TaskManagerCICD.slnx --verify-no-changes --no-restore
+
+      # Compila em Release (reutiliza o restore já feito)
       - name: Build application
         run: dotnet build TaskManagerCICD.slnx --no-restore --configuration Release
 
+      # Corre os testes sem recompilar e grava o relatório .trx na pasta TestResults
       - name: Run tests
-        run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release
+        run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release --report-xunit-trx --results-directory ./TestResults
+
+      # Guarda o relatório como artefacto descarregável na página do run
+      # if: always() = corre MESMO que os testes tenham falhado (é aí que mais precisas do relatório)
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults
+          if-no-files-found: warn   # avisa (sem falhar) se não houver relatório
+          retention-days: 7         # o GitHub apaga o artefacto ao fim de 7 dias
+
+      # Gera o pacote final da API (DLLs + web.config) já pronto a copiar para o IIS
+      # Só corre se tudo antes passou; --no-build reutiliza a compilação Release já feita
+      - name: Publish API
+        run: dotnet publish TaskManagerCICD/TaskManagerCICD.csproj --no-build --configuration Release --output ./publish
+
+      # Guarda o pacote como artefacto: é ESTE ficheiro que a Fase 7 vai instalar no servidor
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskmanager-api
+          path: ./publish
+          if-no-files-found: error  # aqui falha: um deploy sem pacote não faz sentido
+          retention-days: 7
