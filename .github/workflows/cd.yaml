@@ -1,0 +1,76 @@
+name: TaskManager CD
+
+# QUANDO corre: só em push para master (ou à mão). NUNCA em Pull Requests:
+# o job de deploy corre na tua máquina e o repositório é público
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nunca cancelar um deployment a meio; os seguintes esperam na fila
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  # Job 1: nos servidores do GitHub. Compila, testa e cria o pacote
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+
+      - name: Restore dependencies
+        run: dotnet restore TaskManagerCICD.slnx
+
+      - name: Build application
+        run: dotnet build TaskManagerCICD.slnx --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test TaskManagerCICD.slnx --no-build --configuration Release
+
+      - name: Publish API
+        run: dotnet publish TaskManagerCICD/TaskManagerCICD.csproj --no-build --configuration Release --output ./publish
+
+      # Passa o pacote ao job seguinte (corre noutra máquina)
+      - name: Upload publish artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: taskmanager-api
+          path: ./publish
+          if-no-files-found: error
+          retention-days: 7
+
+  # Job 2: na TUA máquina (runner self-hosted). Só começa se o build passou
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/master'   # mesmo com "Run workflow", só publica a partir do master
+    runs-on: [self-hosted, windows, iis]
+
+    steps:
+      # Só precisa da pasta scripts, para ter o deploy.ps1
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: taskmanager-api
+          path: ./publish
+
+      - name: Deploy to IIS
+        shell: powershell
+        run: ./scripts/deploy.ps1 -Source "$PWD\publish"
