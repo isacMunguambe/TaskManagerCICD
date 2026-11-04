@@ -267,38 +267,44 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 > **Onde?** O teu Windows 11 Pro serve perfeitamente para aprender: o IIS existe como funcionalidade do Windows. Quando tiveres um Windows Server, os passos são os mesmos (lá instala-se por *Server Manager* ou `Install-WindowsFeature Web-Server`).
 
 ### Passos
-- [ ] **5.1** Activar o IIS (PowerShell como **Administrador**):
+- [x] **5.1** Activar o IIS (PowerShell como **Administrador**):
   ```powershell
-  Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServerRole, IIS-WebServer, IIS-ManagementConsole -All
+  Enable-WindowsOptionalFeature -Online -FeatureName IIS-WebServerRole, IIS-WebServer, IIS-ManagementConsole, IIS-ManagementScriptingTools -All
   ```
-- [ ] **5.2** Instalar o **ASP.NET Core 10 Hosting Bundle** (página de download do .NET 10 → *Hosting Bundle*). Depois:
+- [x] **5.2** Instalar o **ASP.NET Core 10 Hosting Bundle** (página de download do .NET 10 → *Hosting Bundle*). Depois:
   ```powershell
   iisreset
   ```
   Confirma em *IIS Manager → Modules* que existe `AspNetCoreModuleV2`.
-- [ ] **5.3** Criar pasta, Application Pool e site:
+- [x] **5.3** Criar pasta, Application Pool e aplicação:
   ```powershell
   Import-Module WebAdministration
-  New-Item -ItemType Directory -Force C:\inetpub\TaskManager
+  New-Item -ItemType Directory -Force C:\inetpub\wwwroot\TaskManager
   New-WebAppPool -Name TaskManagerPool
   Set-ItemProperty IIS:\AppPools\TaskManagerPool -Name managedRuntimeVersion -Value ""   # No Managed Code
-  New-Website -Name TaskManager -Port 8080 -PhysicalPath C:\inetpub\TaskManager -ApplicationPool TaskManagerPool
+  New-WebApplication -Name TaskManager -Site "Default Web Site" -PhysicalPath C:\inetpub\wwwroot\TaskManager -ApplicationPool TaskManagerPool
   ```
-- [ ] **5.4** Publicar à mão e copiar:
+  > **Escolha feita:** em vez de um site próprio na porta 8080, a API corre como **aplicação dentro do Default Web Site** (`http://localhost/TaskManager`), mas com um **Application Pool só dela**, em *No Managed Code*. (Ajusta `TaskManagerPool` se deste outro nome ao teu pool.)
+- [x] **5.4** Publicar à mão e copiar:
   ```powershell
-  dotnet publish TaskManagerCICD/TaskManagerCICD.csproj -c Release -o C:\inetpub\TaskManager
+  dotnet publish TaskManagerCICD/TaskManagerCICD.csproj -c Release -o C:\inetpub\wwwroot\TaskManager
   ```
-- [ ] **5.5** Testar: `http://localhost:8080/api/tasks`.
-- [ ] **5.6** Provocar e resolver um erro: pára o pool, apaga um ficheiro `.dll` da pasta, arranca e observa o erro **500.30**. Activa `stdoutLogEnabled="true"` no `web.config` para ver o log, e repõe tudo.
+- [x] **5.5** Testar: `http://localhost/TaskManager/api/tasks`.
+- [x] **5.6** Provocar e resolver um erro: pára o pool, apaga um ficheiro `.dll` da pasta, arranca e observa o erro **500.30**. Activa `stdoutLogEnabled="true"` no `web.config` para ver o log, e repõe tudo.
 
 ### Como sei que funcionou
-- [ ] A API responde no IIS em `localhost:8080`.
-- [ ] Sabes onde ver os logs quando o IIS devolve 500.30 / 502.5.
-- [ ] Percebeste porque é preciso parar o pool antes de substituir os ficheiros (ficheiros bloqueados).
+- [x] A API responde no IIS em `http://localhost/TaskManager/api/tasks`.
+- [x] Sabes onde ver os logs quando o IIS devolve 500.30 / 502.5.
+- [x] Percebeste porque é preciso parar o pool antes de substituir os ficheiros (ficheiros bloqueados).
 
 ### Perguntas de verificação
 1. Porque é que o Application Pool é *No Managed Code* se a aplicação é .NET?
+
+   > **Resposta:** "Managed code" no IIS refere-se ao CLR do **.NET Framework** clássico (v4.0). O ASP.NET Core não usa esse CLR: o `AspNetCoreModuleV2` (do Hosting Bundle) carrega por si o runtime moderno do .NET. Por isso o pool não precisa de carregar o CLR antigo, e "No Managed Code" evita carregar algo inútil.
+
 2. Que identidade corre o processo da API (`IIS AppPool\TaskManagerPool`) e que permissões precisa na pasta?
+
+   > **Resposta:** corre como uma conta virtual, criada automaticamente para cada pool (`IIS AppPool\<nome do pool>`), isolada das dos outros pools. Precisa de **leitura e execução** na pasta da aplicação. Escrita só onde a app realmente escreve (logs, uploads), nunca a pasta toda, para limitar o estrago se a app for comprometida.
 
 ---
 

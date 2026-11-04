@@ -1,0 +1,26 @@
+name: Runner test
+
+# Só corre quando carregas em "Run workflow" (nunca em push nem em Pull Request)
+# Isto é importante: o repositório é público e este job executa na tua máquina
+on: workflow_dispatch
+
+jobs:
+  hello:
+    # Corre no runner da tua máquina que tenha estas três labels
+    runs-on: [self-hosted, windows, iis]
+
+    steps:
+      # Mostra em que máquina e com que utilizador o job está a correr
+      - name: Who am I
+        shell: powershell
+        run: |
+          hostname
+          whoami
+
+      # Confirma que o runner consegue ver o IIS
+      - name: Show IIS state
+        shell: powershell
+        run: |
+          Import-Module WebAdministration
+          Get-Website | Select-Object Name, State, PhysicalPath
+          Get-WebAppPoolState TaskManagerPool
