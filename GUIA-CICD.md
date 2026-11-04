@@ -478,7 +478,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
           shell: powershell
           run: ./scripts/deploy.ps1 -Source "$PWD\publish"
   ```
-- [ ] **7.4** Faz uma alteração visível (ex.: novo endpoint `GET /api/version`), PR → `develop` → `master`, e vê-a chegar ao IIS sozinha.
+- [x] **7.4** Faz uma alteração visível (ex.: novo endpoint `GET /api/version`), PR → `develop` → `master`, e vê-a chegar ao IIS sozinha.
+
+- [ ] **7.5** **Workflow reutilizável** — o `cd.yaml` passa a chamar o `ci.yaml` em vez de repetir o build e os testes:
+  - No `ci.yaml`: acrescentar `workflow_call:` aos gatilhos e tirar `master` do `push` (em `master` quem o corre é o CD).
+  - No `cd.yaml`: apagar o job `build` e pôr `ci: uses: ./.github/workflows/ci.yaml`; o job `deploy` fica com `needs: ci`.
+  - Resultado: num push para `master` há um só build e teste (com formatação), e o deploy só avança se o CI passou.
 
 ### Como sei que funcionou
 - [x] Um merge em `master` actualiza a API no IIS sem tocares no servidor.
@@ -487,7 +492,12 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 
 ### Perguntas de verificação
 1. Porque é que o `deploy` corre num runner diferente do `build`? Como chegam os ficheiros de um ao outro?
+
+   > **Resposta:** o `build` corre num runner do GitHub, que é limpo, descartável e igual de cada vez, mas não consegue alcançar o teu servidor. O `deploy` precisa de mexer no IIS, que está numa máquina privada; o runner self-hosted resolve isso porque é ele que se liga **para fora** ao GitHub, sem abrir portas. Os ficheiros viajam por um **artefacto**: o `build` faz `upload-artifact` e o `deploy` faz `download-artifact`, e o `needs: build` garante a ordem.
+
 2. Com dois workflows (CI e CD) os testes correm duas vezes em `master`. Como resolverias? (Pista: *reusable workflows* com `workflow_call`.)
+
+   > **Resposta:** tornar o `ci.yaml` reutilizável, acrescentando `workflow_call` aos seus gatilhos. O `cd.yaml` passa a ter um job que o chama com `uses: ./.github/workflows/ci.yaml`, e o job `deploy` fica com `needs:` nesse job. Assim há um único build e teste, e o deploy só avança se o CI passou (incluindo a formatação). Uma alternativa é o gatilho `workflow_run`, que arranca o CD quando o CI termina, mas dá menos controlo sobre a ordem e sobre os artefactos.
 
 ---
 
