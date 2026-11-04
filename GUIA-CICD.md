@@ -399,7 +399,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
   dotnet publish TaskManagerCICD/TaskManagerCICD.csproj -c Release -o $env:TEMP\tm-publish
   .\scripts\deploy.ps1 -Source $env:TEMP\tm-publish
   ```
-- [ ] **7.3** Criar `.github/workflows/cd.yaml`:
+- [x] **7.3** Criar `.github/workflows/cd.yaml`:
   ```yaml
   name: TaskManager CD
 
@@ -481,7 +481,7 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 - [ ] **7.4** Faz uma alteração visível (ex.: novo endpoint `GET /api/version`), PR → `develop` → `master`, e vê-a chegar ao IIS sozinha.
 
 ### Como sei que funcionou
-- [ ] Um merge em `master` actualiza a API no IIS sem tocares no servidor.
+- [x] Um merge em `master` actualiza a API no IIS sem tocares no servidor.
 - [ ] Se o build ou os testes falharem, o job `deploy` **não** corre.
 - [ ] Se a cópia falhar, o pool volta a arrancar (o `finally` funciona).
 
