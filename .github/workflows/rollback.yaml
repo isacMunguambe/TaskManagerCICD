@@ -1,0 +1,37 @@
+name: Rollback
+
+# Só corre quando carregas em "Run workflow" e escreves o nome do backup
+on:
+  workflow_dispatch:
+    inputs:
+      backup:
+        description: "Nome do backup a restaurar (ex.: 20261105-153000). Estão em C:\\deploy-backups\\TaskManager"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# Partilha o grupo do CD: um rollback nunca corre ao mesmo tempo que um deploy
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    if: github.ref == 'refs/heads/master'
+    runs-on: [self-hosted, windows, iis]
+
+    steps:
+      # Só precisa da pasta scripts, para ter o deploy.ps1
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      # O valor do input passa por variável de ambiente (não é colado directamente no comando)
+      - name: Restore backup
+        shell: powershell
+        env:
+          BACKUP: ${{ inputs.backup }}
+        run: ./scripts/deploy.ps1 -RestoreBackup $env:BACKUP
