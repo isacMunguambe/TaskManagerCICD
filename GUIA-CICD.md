@@ -506,13 +506,24 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 **Objectivo:** trocar o armazenamento em memória por SQL Server + EF Core, sem nenhuma password no repositório.
 
 ### Passos
-- [ ] **8.1** Adicionar EF Core: `TaskManagerDbContext`, `EfTaskService : ITaskService`, migração inicial. Os testes unitários continuam a usar o serviço em memória (aqui a interface da Fase 2 compensa).
-- [ ] **8.2** `appsettings.json` tem só valores não sensíveis. Em desenvolvimento usa **User Secrets**:
+- [x] **8.1** Adicionar EF Core: `TaskManagerDbContext`, `EfTaskService : ITaskService`, migração inicial. Os testes unitários continuam a usar o serviço em memória (aqui a interface da Fase 2 compensa).
+  ```bash
+  dotnet add TaskManagerCICD package Microsoft.EntityFrameworkCore.SqlServer
+  dotnet add TaskManagerCICD package Microsoft.EntityFrameworkCore.Design
+  dotnet new tool-manifest
+  dotnet tool install dotnet-ef
+  ```
+  Depois do 8.2 (connection string), cria a migração e aplica-a à base de dados local:
+  ```bash
+  dotnet ef migrations add InitialCreate --project TaskManagerCICD
+  dotnet ef database update --project TaskManagerCICD
+  ```
+- [x] **8.2** `appsettings.json` tem só valores não sensíveis. Em desenvolvimento usa **User Secrets**:
   ```bash
   dotnet user-secrets init --project TaskManagerCICD
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Database=TaskManager;..." --project TaskManagerCICD
   ```
-- [ ] **8.3** No servidor, a connection string vem de **variável de ambiente do Application Pool** (não fica em nenhum ficheiro publicado):
+- [x] **8.3** No servidor, a connection string vem de **variável de ambiente do Application Pool** (não fica em nenhum ficheiro publicado):
   ```powershell
   # appcmd: define variáveis de ambiente só para este pool
   & $env:windir\system32\inetsrv\appcmd.exe set config -section:system.applicationHost/applicationPools `
@@ -521,20 +532,11 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
     "/+[name='TaskManagerPool'].environmentVariables.[name='ASPNETCORE_ENVIRONMENT',value='Production']" /commit:apphost
   ```
   > Repara no `__` (duplo underscore): é assim que `ConnectionStrings:DefaultConnection` se escreve numa variável de ambiente.
-- [ ] **8.4** **Migrações no pipeline.** Gera um script SQL idempotente no job `build` e aplica-o no `deploy`:
-  ```bash
-  dotnet tool install --global dotnet-ef
-  dotnet ef migrations script --idempotent --project TaskManagerCICD -o ./publish/migrate.sql
-  ```
-  No `deploy`, aplica com `Invoke-Sqlcmd` (módulo `SqlServer`) usando a connection string guardada como **GitHub Secret** `DB_CONNECTION_STRING` (*Settings → Secrets and variables → Actions*):
-  ```yaml
-  - name: Apply migrations
-    shell: powershell
-    env:
-      DB_CONNECTION_STRING: ${{ secrets.DB_CONNECTION_STRING }}
-    run: Invoke-Sqlcmd -ConnectionString $env:DB_CONNECTION_STRING -InputFile ./publish/migrate.sql
-  ```
-- [ ] **8.5** Confirmar que o segredo aparece como `***` nos logs.
+- [x] **8.4** ⏭️ **PULADO POR AGORA** — migrações automáticas no pipeline. Fica para mais tarde; até lá, as migrações aplicam-se à mão (`dotnet ef database update --project TaskManagerCICD`) antes de levar alterações de modelo ao `master`. O plano, quando for retomado:
+  - O `ci.yaml` gera um script SQL idempotente (`dotnet ef migrations script --idempotent`) e guarda-o como artefacto `taskmanager-migrations`.
+  - O `cd.yaml` aplica-o antes de copiar a API (`Invoke-Sqlcmd -ConnectionString $env:DB_CONNECTION_STRING -InputFile ...`).
+  - Pré-requisitos: módulo `SqlServer` no PC do runner (`Install-Module SqlServer -Scope AllUsers -Force`) e GitHub Secret `DB_CONNECTION_STRING`.
+- [ ] **8.5** ⏭️ (depende do 8.4, fica adiado) Confirmar que o segredo aparece como `***` nos logs.
 
 ### Como sei que funcionou
 - [ ] `git grep -i password` não encontra nada sensível.

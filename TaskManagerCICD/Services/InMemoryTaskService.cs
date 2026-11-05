@@ -4,7 +4,7 @@ namespace TaskManagerCICD.Services;
 
 public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
 {
-    public const int MaxTitleLength = 100;
+    public const int MaxTitleLength = TaskRules.MaxTitleLength;
 
     private readonly Lock _lock = new();
     private readonly List<TaskItem> _tasks = [];
@@ -22,18 +22,8 @@ public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
 
     public TaskItem Create(CreateTaskRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Title))
-            throw new ArgumentException("O título é obrigatório.", nameof(request));
-
-        if (request.Title.Length > MaxTitleLength)
-            throw new ArgumentException($"O título não pode ter mais de {MaxTitleLength} caracteres.", nameof(request));
-
-        if (!Enum.IsDefined(request.Priority))
-            throw new ArgumentException("A prioridade é inválida.", nameof(request));
-
         var now = timeProvider.GetUtcNow().UtcDateTime;
-        if (request.DueDate is { } due && due < now)
-            throw new ArgumentException("A data limite não pode estar no passado.", nameof(request));
+        TaskRules.ValidateCreate(request, now);
 
         lock (_lock)
         {
@@ -58,8 +48,7 @@ public class InMemoryTaskService(TimeProvider timeProvider) : ITaskService
             var task = _tasks.FirstOrDefault(t => t.Id == id)
                 ?? throw new KeyNotFoundException($"Tarefa {id} não encontrada.");
 
-            if (task.IsCompleted)
-                throw new InvalidOperationException($"A tarefa {id} já está completa.");
+            TaskRules.EnsureCanComplete(task);
 
             task.IsCompleted = true;
             return task;
