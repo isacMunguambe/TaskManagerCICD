@@ -506,8 +506,19 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 **Objectivo:** trocar o armazenamento em memória por SQL Server + EF Core, sem nenhuma password no repositório.
 
 ### Passos
-- [ ] **8.1** Adicionar EF Core: `TaskManagerDbContext`, `EfTaskService : ITaskService`, migração inicial. Os testes unitários continuam a usar o serviço em memória (aqui a interface da Fase 2 compensa).
-- [ ] **8.2** `appsettings.json` tem só valores não sensíveis. Em desenvolvimento usa **User Secrets**:
+- [x] **8.1** Adicionar EF Core: `TaskManagerDbContext`, `EfTaskService : ITaskService`, migração inicial. Os testes unitários continuam a usar o serviço em memória (aqui a interface da Fase 2 compensa).
+  ```bash
+  dotnet add TaskManagerCICD package Microsoft.EntityFrameworkCore.SqlServer
+  dotnet add TaskManagerCICD package Microsoft.EntityFrameworkCore.Design
+  dotnet new tool-manifest
+  dotnet tool install dotnet-ef
+  ```
+  Depois do 8.2 (connection string), cria a migração e aplica-a à base de dados local:
+  ```bash
+  dotnet ef migrations add InitialCreate --project TaskManagerCICD
+  dotnet ef database update --project TaskManagerCICD
+  ```
+- [x] **8.2** `appsettings.json` tem só valores não sensíveis. Em desenvolvimento usa **User Secrets**:
   ```bash
   dotnet user-secrets init --project TaskManagerCICD
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=...;Database=TaskManager;..." --project TaskManagerCICD
