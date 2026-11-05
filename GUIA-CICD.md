@@ -553,24 +553,16 @@ Percurso faseado para dominar CI/CD com **ASP.NET Core (.NET 10) + GitHub Action
 **Objectivo:** o pipeline confirma que a API ficou de pé e, se não ficou, volta à versão anterior.
 
 ### Passos
-- [ ] **9.1** Health check na API:
+- [ ] **9.1** Health check na API (`HealthChecks/DatabaseHealthCheck.cs` + `Program.cs`):
   ```csharp
-  builder.Services.AddHealthChecks().AddDbContextCheck<TaskManagerDbContext>();
+  builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
   app.MapHealthChecks("/health");
   ```
-  (O `AddDbContextCheck` vem do pacote `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`.)
-- [ ] **9.2** **Smoke test** no fim do `deploy`:
-  ```powershell
-  $ok = $false
-  foreach ($i in 1..10) {
-      try { if ((Invoke-WebRequest http://localhost:8080/health -UseBasicParsing).StatusCode -eq 200) { $ok = $true; break } } catch {}
-      Start-Sleep 3
-  }
-  if (-not $ok) { throw "Health check falhou" }
-  ```
-- [ ] **9.3** **Backups versionados:** antes de copiar, o `deploy.ps1` guarda a versão actual em `C:\deploy-backups\TaskManager\<data-hora>` e mantém só as últimas 5.
-- [ ] **9.4** **Rollback automático:** se o smoke test falhar, restaura o último backup e marca o job como falhado.
-- [ ] **9.5** **Rollback manual:** workflow `rollback.yaml` com `workflow_dispatch` e um input `backup` (nome da pasta) para restaurar uma versão escolhida.
+  Testa: `http://localhost:5141/health` deve responder `Healthy`.
+- [ ] **9.2** **Smoke test** no fim do `scripts/deploy.ps1`: 10 tentativas ao `http://localhost/TaskManager/health`, com 3 segundos entre elas.
+- [ ] **9.3** **Backups versionados:** antes de copiar, o `deploy.ps1` guarda a versão actual em `C:\deploy-backups\TaskManager\<aaaaMMdd-HHmmss>` e mantém só as últimas 5.
+- [ ] **9.4** **Rollback automático:** se o smoke test falhar, o `deploy.ps1` repõe o último backup e termina com erro (o job fica vermelho).
+- [ ] **9.5** **Rollback manual:** `.github/workflows/rollback.yaml` (`workflow_dispatch` com o input `backup`) chama `deploy.ps1 -RestoreBackup <nome>`.
 - [ ] **9.6** Testa: faz deploy de uma versão que rebenta no arranque (ex.: `throw` no `Program.cs`) e vê o rollback a funcionar.
 
 ### Como sei que funcionou

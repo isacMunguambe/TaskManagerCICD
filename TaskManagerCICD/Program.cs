@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using TaskManagerCICD.Data;
+using TaskManagerCICD.HealthChecks;
 using TaskManagerCICD.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<TaskManagerDbContext>(options => options.UseSqlServer(connectionString));
 builder.Services.AddScoped<ITaskService, EfTaskService>();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 var app = builder.Build();
 
@@ -33,5 +35,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
