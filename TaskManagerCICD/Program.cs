@@ -38,3 +38,6 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+// Torna a classe Program visível ao projecto de testes (usada pelo WebApplicationFactory)
+public partial class Program { }

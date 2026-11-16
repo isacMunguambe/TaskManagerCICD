@@ -38,61 +38,16 @@ function Sync-Folder([string] $From, [string] $To) {
     if ($LASTEXITCODE -ge 8) { throw "robocopy falhou com código $LASTEXITCODE" }
 }
 
-# Smoke test: pergunta ao /health se a API arrancou e chega à base de dados (10 tentativas, 3 s entre elas)
+# Smoke test: pergunta ao /health se a API arrancou e chega à base de dados (6 tentativas, até 5 s cada e 3 s de pausa: no pior caso cerca de 50 segundos)
 function Test-Health {
-    foreach ($i in 1..10) {
+    foreach ($i in 1..6) {
         try {
-            $response = Invoke-WebRequest $HealthUrl -UseBasicParsing -TimeoutSec 10
+            $response = Invoke-WebRequest $HealthUrl -UseBasicParsing -TimeoutSec 5
             if ($response.StatusCode -eq 200) { return $true }
         } catch { }
         Start-Sleep 3
     }
     return $false
-}
-
-# --- Modo restauro: volta a uma versão guardada (usado pelo workflow de rollback manual) ---
-if ($PSCmdlet.ParameterSetName -eq "Restore") {
-    if ($RestoreBackup -notmatch '^\d{8}-\d{6}$') { throw "Nome de backup inválido: $RestoreBackup (esperado: aaaaMMdd-HHmmss)" }
-
-    $backup = Join-Path $BackupRoot $RestoreBackup
-    if (-not (Test-Path $backup)) {
-        $available = (Get-ChildItem $BackupRoot -Directory -ErrorAction SilentlyContinue).Name -join ", "
-        throw "Backup não existe: $backup. Disponíveis: $available"
-    }
-
-    Stop-Pool
-    try { Sync-Folder $backup $Destination } finally { Start-Pool }
-
-    if (-not (Test-Health)) { throw "Health check falhou depois do restauro de $RestoreBackup" }
-    Write-Host "Restauro concluído: $RestoreBackup"
-    exit 0
-}
-
-# --- Modo deploy ---
-if (-not (Test-Path $Source)) { throw "Pasta de origem não existe: $Source" }
-
-$timestamp   = Get-Date -Format "yyyyMMdd-HHmmss"
-$backup      = Join-Path $BackupRoot $timestamp
-$hadPrevious = Test-Path (Join-Path $Destination "web.config")   # há versão anterior para guardar?
-$backupReady = $false
-$failure     = $null
-
-Stop-Pool
-try {
-    # 1. Guarda a versão actual antes de a substituir
-    if ($hadPrevious) {
-        Write-Host "A guardar a versão actual em $backup..."
-        Sync-Folder $Destination $backup
-        $backupReady = $true
-    }
-
-    # 2. Copia a versão nova
-    Write-Host "A copiar $Source para $Destination..."
-    Sync-Folder $Source $Destination
-}
-catch {
-    $failure = $_
-    Write-Host "Falhou: $failure"
 }
 
 # 3. Arranca SEMPRE o pool, mesmo que algo tenha falhado, para não deixar a app parada
