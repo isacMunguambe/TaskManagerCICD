@@ -1,4 +1,7 @@
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
+using TaskManagerCICD.Data;
+using TaskManagerCICD.HealthChecks;
 using TaskManagerCICD.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,7 +13,14 @@ builder.Services.AddControllers()
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<ITaskService, InMemoryTaskService>();
+
+// A connection string vem de User Secrets (desenvolvimento) ou de variável de ambiente (servidor)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionStrings:DefaultConnection não está configurada.");
+
+builder.Services.AddDbContext<TaskManagerDbContext>(options => options.UseSqlServer(connectionString));
+builder.Services.AddScoped<ITaskService, EfTaskService>();
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 var app = builder.Build();
 
@@ -25,6 +35,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHealthChecks("/health");
 
 app.Run();
 
