@@ -27,3 +27,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Torna a classe Program visível ao projecto de testes (usada pelo WebApplicationFactory)
+public partial class Program { }

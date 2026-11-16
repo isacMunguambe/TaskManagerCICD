@@ -29,10 +29,17 @@ try {
     # robocopy devolve 0-7 em sucesso (1 = copiou ficheiros); só 8 ou mais é erro
     if ($LASTEXITCODE -ge 8) { throw "robocopy falhou com código $LASTEXITCODE" }
 }
-finally {
-    # 3. Arranca SEMPRE o pool, mesmo que a cópia tenha falhado, para não deixar a app parada
-    Write-Host "A arrancar $AppPool..."
-    Start-WebAppPool $AppPool
+
+# Smoke test: pergunta ao /health se a API arrancou e chega à base de dados (6 tentativas, até 5 s cada e 3 s de pausa: no pior caso cerca de 50 segundos)
+function Test-Health {
+    foreach ($i in 1..6) {
+        try {
+            $response = Invoke-WebRequest $HealthUrl -UseBasicParsing -TimeoutSec 5
+            if ($response.StatusCode -eq 200) { return $true }
+        } catch { }
+        Start-Sleep 3
+    }
+    return $false
 }
 
 # Evita que o GitHub Actions leia o código 1 do robocopy como falha
